@@ -1,11 +1,9 @@
 //! Gossip protocol event loop.
 
-use tokio::time::sleep;
 use std::time::Duration;
+use tokio::time::sleep;
 
-use crate::gossip::round::{
-    GossipScheduler, ACTIVE_ROUND_INTERVAL_MS, IDLE_ROUND_INTERVAL_MS,
-};
+use crate::gossip::round::{GossipScheduler, ACTIVE_ROUND_INTERVAL_MS, IDLE_ROUND_INTERVAL_MS};
 
 pub async fn run_gossip_loop(mut scheduler: GossipScheduler) {
     loop {

@@ -34,7 +34,10 @@ impl MeshDatabase {
 
     /// Insert a pending message with a unix-second timestamp (for tests).
     pub async fn insert_pending_message(&self, message_id: [u8; 32], unix_sec: u64) {
-        self.pending_messages.lock().await.push((message_id, unix_sec));
+        self.pending_messages
+            .lock()
+            .await
+            .push((message_id, unix_sec));
     }
 
     /// Delete all pending messages older than `cutoff_unix_sec`.
