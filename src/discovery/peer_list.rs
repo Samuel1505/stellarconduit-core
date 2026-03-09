@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::discovery::events::DiscoveryEvent;
-use crate::peer::peer::Peer;
+use crate::peer::peer_node::Peer;
 
 pub struct PeerList {
     /// Maps public key to the Peer struct

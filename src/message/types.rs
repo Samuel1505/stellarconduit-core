@@ -59,8 +59,8 @@ mod signature_serde {
                 A: SeqAccess<'de>,
             {
                 let mut arr = [0u8; 64];
-                for i in 0..64 {
-                    arr[i] = seq
+                for (i, item) in arr.iter_mut().enumerate() {
+                    *item = seq
                         .next_element()?
                         .ok_or_else(|| de::Error::invalid_length(i, &self))?;
                 }

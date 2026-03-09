@@ -1,4 +1,4 @@
-use crate::peer::peer::Peer;
+use crate::peer::peer_node::Peer;
 
 pub enum PenaltyReason {
     InvalidSignature,

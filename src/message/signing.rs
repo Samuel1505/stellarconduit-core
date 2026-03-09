@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 
 fn generate_payload_hash(envelope: &TransactionEnvelope) -> [u8; 32] {
     let mut hasher = Sha256::new();
-    hasher.update(&envelope.origin_pubkey);
+    hasher.update(envelope.origin_pubkey);
     hasher.update(envelope.timestamp.to_be_bytes());
     hasher.update(envelope.tx_xdr.as_bytes());
     hasher.finalize().into()

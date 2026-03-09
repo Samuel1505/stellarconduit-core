@@ -1,3 +1,3 @@
 pub mod identity;
-pub mod peer;
+pub mod peer_node;
 pub mod reputation;

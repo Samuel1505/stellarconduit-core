@@ -2,7 +2,7 @@ use ed25519_dalek::SigningKey;
 use rand::rngs::OsRng;
 use stellarconduit_core::peer::{
     identity::PeerIdentity,
-    peer::Peer,
+    peer_node::Peer,
     reputation::{apply_penalty, apply_reward, PenaltyReason, RewardReason},
 };
 

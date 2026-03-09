@@ -4,6 +4,12 @@ pub struct HopCounter {
     pub peer_distances: HashMap<[u8; 32], u8>,
 }
 
+impl Default for HopCounter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HopCounter {
     pub fn new() -> Self {
         Self {

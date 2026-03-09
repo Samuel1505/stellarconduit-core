@@ -126,7 +126,8 @@ mod tests {
 
     #[test]
     fn test_round_executed_resets_round_timer() {
-        let mut s = scheduler_with_last_round_ago(Duration::from_millis(ACTIVE_ROUND_INTERVAL_MS + 50));
+        let mut s =
+            scheduler_with_last_round_ago(Duration::from_millis(ACTIVE_ROUND_INTERVAL_MS + 50));
         assert!(s.is_time_for_round());
         s.round_executed();
         assert!(!s.is_time_for_round());
@@ -135,13 +136,19 @@ mod tests {
     #[test]
     fn test_current_interval_active() {
         let s = GossipScheduler::new();
-        assert_eq!(s.current_interval(), Duration::from_millis(ACTIVE_ROUND_INTERVAL_MS));
+        assert_eq!(
+            s.current_interval(),
+            Duration::from_millis(ACTIVE_ROUND_INTERVAL_MS)
+        );
     }
 
     #[test]
     fn test_current_interval_idle() {
         let s = scheduler_idle_for(Duration::from_secs(IDLE_TIMEOUT_SEC + 1));
-        assert_eq!(s.current_interval(), Duration::from_millis(IDLE_ROUND_INTERVAL_MS));
+        assert_eq!(
+            s.current_interval(),
+            Duration::from_millis(IDLE_ROUND_INTERVAL_MS)
+        );
     }
 
     #[test]

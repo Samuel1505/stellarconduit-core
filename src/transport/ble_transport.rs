@@ -21,13 +21,15 @@ use crate::transport::unified::{ChunkFrame, MessageChunker, MessageReassembler};
 // ─── StellarConduit BLE Service UUIDs ────────────────────────────────────────
 
 /// Primary StellarConduit GATT Service UUID
-pub const SC_SERVICE_UUID: Uuid = Uuid::from_u128(0x00deadbeef_cafe_babe_0000_0000000001u128);
+pub const SC_SERVICE_UUID: Uuid = Uuid::from_u128(0x00de_adbe_efca_feba_be00_0000_0000_0001_u128);
 
 /// Write Characteristic — Central peers write inbound chunk frames here.
-pub const SC_WRITE_CHAR_UUID: Uuid = Uuid::from_u128(0x00deadbeef_cafe_babe_0000_0000000002u128);
+pub const SC_WRITE_CHAR_UUID: Uuid =
+    Uuid::from_u128(0x00de_adbe_efca_feba_be00_0000_0000_0002_u128);
 
 /// Notify Characteristic — Peripheral notifies connected Centrals with outbound chunk frames.
-pub const SC_NOTIFY_CHAR_UUID: Uuid = Uuid::from_u128(0x00deadbeef_cafe_babe_0000_0000000003u128);
+pub const SC_NOTIFY_CHAR_UUID: Uuid =
+    Uuid::from_u128(0x00de_adbe_efca_feba_be00_0000_0000_0003_u128);
 
 /// BLE MTU used for chunking. The BLE 4.2+ spec allows up to 517 bytes per ATT packet,
 /// but we use a conservative 244 bytes (common negotiated value).
