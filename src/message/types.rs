@@ -73,7 +73,11 @@ mod signature_serde {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TopologyUpdate {}
+pub struct TopologyUpdate {
+    pub origin_pubkey: [u8; 32],
+    pub directly_connected_peers: Vec<[u8; 32]>,
+    pub hops_to_relay: u8,
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SyncRequest {}

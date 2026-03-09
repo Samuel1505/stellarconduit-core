@@ -1,6 +1,7 @@
 pub mod discovery;
 pub mod message;
 pub mod peer;
+pub mod topology;
 pub mod transport;
 
 pub fn add(left: u64, right: u64) -> u64 {
