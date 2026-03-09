@@ -38,7 +38,8 @@ impl RelayNode {
         let tx_hash = self.rpc_client.submit_transaction(&envelope.tx_xdr)?;
 
         // Record that we've successfully submitted this message_id
-        self.deduplicator.mark_submitted(envelope.message_id, tx_hash.clone());
+        self.deduplicator
+            .mark_submitted(envelope.message_id, tx_hash.clone());
 
         Ok(tx_hash)
     }
