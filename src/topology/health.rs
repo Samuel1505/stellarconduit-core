@@ -75,7 +75,7 @@ impl StatePruner {
         for event in lost {
             use crate::discovery::events::DiscoveryEvent;
             if let DiscoveryEvent::PeerLost(identity) = event {
-                self.db.mark_peer_offline(identity.pubkey).await;
+                let _ = self.db.mark_peer_offline(&identity.pubkey).await;
                 log::debug!("Pruner: marked peer {:?} offline", &identity.pubkey[..4]);
             }
         }
@@ -103,7 +103,11 @@ impl StatePruner {
             now.saturating_sub(MSG_MAX_AGE.as_secs())
         };
 
-        let deleted = self.db.delete_messages_older_than(cutoff).await;
+        let deleted = self
+            .db
+            .delete_messages_older_than(cutoff)
+            .await
+            .unwrap_or(0);
         if deleted > 0 {
             log::debug!("Pruner: deleted {} expired message(s)", deleted);
         }
@@ -145,6 +149,11 @@ mod tests {
             // Set last_seen to 2 hours ago (well past 30-min expiry)
             list.set_last_seen(&pk(0xAA), 0);
         }
+
+        // Must exist in DB to be marked offline
+        let mut p = crate::peer::peer_node::Peer::new(pk(0xAA));
+        p.is_banned = false;
+        db.save_peer(&p).await.unwrap();
 
         let pruner = make_pruner(graph, peer_list.clone(), db.clone());
         pruner.prune_peers().await;
@@ -240,9 +249,18 @@ mod tests {
         let peer_list = Arc::new(Mutex::new(PeerList::new(30 * 60)));
         let db = Arc::new(MeshDatabase::new_stub());
 
+        let future_ts = {
+            use std::time::{SystemTime, UNIX_EPOCH};
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                + 100_000
+        };
+
         // Insert two messages: one very old, one fresh
         db.insert_pending_message(pk(0xA1), 1000).await; // ancient
-        db.insert_pending_message(pk(0xA2), u64::MAX).await; // far future = definitely fresh
+        db.insert_pending_message(pk(0xA2), future_ts).await; // future
         assert_eq!(db.pending_message_count().await, 2);
 
         let pruner = make_pruner(graph, peer_list, db.clone());
@@ -261,8 +279,17 @@ mod tests {
         let peer_list = Arc::new(Mutex::new(PeerList::new(30 * 60)));
         let db = Arc::new(MeshDatabase::new_stub());
 
+        let future_ts = {
+            use std::time::{SystemTime, UNIX_EPOCH};
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                + 100_000
+        };
+
         // Insert only a fresh message
-        db.insert_pending_message(pk(0xB1), u64::MAX).await;
+        db.insert_pending_message(pk(0xB1), future_ts).await;
         assert_eq!(db.pending_message_count().await, 1);
 
         let pruner = make_pruner(graph, peer_list, db.clone());

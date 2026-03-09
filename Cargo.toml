@@ -23,6 +23,10 @@ tokio = { version = "1.37", features = ["full"] }
 async-trait = "0.1"
 futures = "0.3"
 
+# Persistence
+rusqlite = { version = "0.31", features = ["bundled"] }
+tokio-rusqlite = "0.5"
+
 # Data structures and bloom filters for gossip deduplication
 bloomfilter = "1.0.14"
 lru = "0.12.3"
