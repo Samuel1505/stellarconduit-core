@@ -1,0 +1,174 @@
+name: Core CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt-and-lint:
+    name: Format and Clippy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
+          override: true
+
+      - name: Cache cargo registry + build
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: fmt-and-lint
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache cargo registry + build
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo test --workspace
+        run: cargo test --workspace
+
+      - name: Heavy simulation tests (integration mesh)
+        run: cargo test --test '*' -- --nocapture
+
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    # Run benchmarks for both pushes to main and PRs, but only compare against
+    # baseline when running in the context of a pull request.
+    needs: fmt-and-lint
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust (nightly)
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      - name: Cache cargo registry + build
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo bench (current branch)
+        if: github.event_name != 'pull_request'
+        run: cargo bench
+
+      - name: Run benchmarks on base (main)
+        if: github.event_name == 'pull_request'
+        env:
+          RUST_BACKTRACE: 1
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          echo "Checking out base commit $BASE_SHA"
+          git checkout "$BASE_SHA"
+          cargo bench --bench gossip_bench -- --output-format bencher > /tmp/bench-base.txt
+
+      - name: Run benchmarks on PR head
+        if: github.event_name == 'pull_request'
+        env:
+          RUST_BACKTRACE: 1
+        run: |
+          HEAD_SHA="${{ github.sha }}"
+          echo "Checking out PR head commit $HEAD_SHA"
+          git checkout "$HEAD_SHA"
+          cargo bench --bench gossip_bench -- --output-format bencher > /tmp/bench-head.txt
+
+      - name: Compare gossip benchmarks with base (fail on >10% regression)
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 - << 'PY'
+          import sys
+          from pathlib import Path
+
+          def parse_bencher_output(path):
+            results = {}
+            if not Path(path).is_file():
+              print(f"Benchmark output file not found: {path}", file=sys.stderr)
+              return results
+            with open(path, "r", encoding="utf-8") as f:
+              for line in f:
+                line = line.strip()
+                if not line.startswith("test "):
+                  continue
+                # Example format:
+                # test gossip_noop ... bench:       1,234 ns/iter (+/- 89)
+                parts = line.split()
+                if len(parts) < 6:
+                  continue
+                name = parts[1]
+                # Only track gossip-related benchmarks
+                if "gossip" not in name:
+                  continue
+                # parts[4] is the time value (possibly with commas)
+                raw_time = parts[4].replace(",", "")
+                try:
+                  time = float(raw_time)
+                except ValueError:
+                  continue
+                results[name] = time
+            return results
+
+          base = parse_bencher_output("/tmp/bench-base.txt")
+          head = parse_bencher_output("/tmp/bench-head.txt")
+
+          if not base:
+            print("No base benchmark results found for gossip benches; skipping regression check.")
+            sys.exit(0)
+
+          has_regression = False
+
+          for name, base_time in base.items():
+            head_time = head.get(name)
+            if head_time is None:
+              continue
+            if base_time <= 0:
+              continue
+            delta = (head_time - base_time) / base_time
+            percent = delta * 100.0
+            direction = "slower" if delta > 0 else "faster"
+            print(f"{name}: base={base_time:.3f} ns, head={head_time:.3f} ns, change={percent:+.2f}% ({direction})")
+            if delta > 0.10:
+              has_regression = True
+
+          if has_regression:
+            print("Benchmark regression detected: gossip benchmarks are >10% slower on this PR.")
+            sys.exit(1)
+          else:
+            print("No significant (>10%) regressions detected in gossip benchmarks.")
+            sys.exit(0)
+          PY
+
