@@ -20,6 +20,7 @@ soroban-sdk = "22.0.0"
 
 # Async and networking basics (for WiFi-Direct / Transport abstraction)
 tokio = { version = "1.37", features = ["full"] }
+async-trait = "0.1"
 futures = "0.3"
 
 # Data structures and bloom filters for gossip deduplication
