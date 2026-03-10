@@ -61,3 +61,15 @@ harness = false
 [[bench]]
 name = "bloom_filter_bench"
 harness = false
+
+[[test]]
+name = "mesh_propagation_test"
+path = "tests/integration/mesh_propagation_test.rs"
+
+[[test]]
+name = "relay_routing_test"
+path = "tests/integration/relay_routing_test.rs"
+
+[[test]]
+name = "double_spend_simulation_test"
+path = "tests/integration/double_spend_simulation_test.rs"
